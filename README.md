@@ -18,81 +18,181 @@ https://github.com/user-attachments/assets/ea69b9ec-9129-4590-8ab7-9630f0b58da0
 
 ## 架构图
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         用户界面层                               │
-│                                                                 │
-│   ┌──────────────────────┐      ┌──────────────────────────┐   │
-│   │     Web PWA          │      │     TUI (terminal-ui.js) │   │
-│   │  (public/index.html) │      │     blessed + mpv        │   │
-│   │  HTML5 Audio / WebSocket    │     WebSocket + axios    │   │
-│   └──────────┬───────────┘      └────────────┬─────────────┘   │
-└──────────────┼──────────────────────────────┼─────────────────┘
-               │  HTTP / WebSocket             │
-┌──────────────▼──────────────────────────────▼─────────────────┐
-│                       服务层 (server/)                          │
-│                                                                 │
-│   ┌─────────────────────────────────────────────────────────┐  │
-│   │               index.js  (Express + WebSocket)           │  │
-│   └───┬──────────┬──────────┬──────────┬────────────────────┘  │
-│       │          │          │          │                        │
-│   ┌───▼──┐  ┌────▼───┐  ┌──▼─────┐ ┌──▼──────────┐           │
-│   │Router│  │Context │  │ State  │ │  Scheduler  │           │
-│   │意图  │  │Builder │  │ 状态   │ │  节律调度   │           │
-│   │分流  │  │提示词  │  │ 记忆   │ │ 定时推荐   │           │
-│   └───┬──┘  │组装    │  └──┬─────┘ └─────────────┘           │
-│       │     └────┬───┘     │                                   │
-│       │          │         │                                   │
-│   ┌───▼──────────▼─────────▼──────────────────────────────┐   │
-│   │              Claude Adapter (AI 适配器)                 │   │
-│   │   优先级: Claude CLI > Anthropic API > 降级处理         │   │
-│   └───────────────────────┬────────────────────────────────┘   │
-│                           │                                     │
-│   ┌───────────────────────▼────────────────────────────────┐   │
-│   │              Memory Manager (记忆系统)                   │   │
-│   │  appendRaw(实时) → flushSession(摘要+偏好提炼)           │   │
-│   │  L1: MEMORY.md   L2: memory/*.md   L3: memory.db(FTS5)  │   │
-│   └────────────────────────────────────────────────────────┘   │
-│                                                                 │
-│   ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐    │
-│   │  Music API   │  │  Weather API │  │  Playback Service│    │
-│   │ 网易云搜索   │  │ Open-Meteo   │  │ 多平台播放URL    │    │
-│   └──────────────┘  └──────────────┘  └──────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
-               │                              │
-┌──────────────▼──────────────────────────────▼─────────────────┐
-│                       数据层 (user/)                            │
-│                                                                 │
-│   ┌──────────────────┐   ┌──────────────────────────────────┐  │
-│   │   MEMORY.md      │   │  playlists.json                  │  │
-│   │  ┌─────────────┐ │   │  歌单数据（本地同步）            │  │
-│   │  │ 用户信息    │ │   └──────────────────────────────────┘  │
-│   │  │ 音乐品味    │ │   ┌──────────────────────────────────┐  │
-│   │  │(自动更新)   │ │   │  routines.md / mood-rules.md     │  │
-│   │  │ 对话偏好    │ │   │  用户作息和心情规则（手动编辑）  │  │
-│   │  │(自动提炼)   │ │   └──────────────────────────────────┘  │
-│   │  └─────────────┘ │   ┌──────────────────────────────────┐  │
-│   └──────────────────┘   │  state.db.json                   │  │
-│   ┌──────────────────┐   │  运行时状态（播放历史/偏好）     │  │
-│   │  memory/*.md     │   └──────────────────────────────────┘  │
-│   │  每日对话日志    │                                          │
-│   └──────────────────┘                                          │
-│   ┌──────────────────┐                                          │
-│   │  memory.db       │                                          │
-│   │  FTS5 全文索引   │                                          │
-│   └──────────────────┘                                          │
-└─────────────────────────────────────────────────────────────────┘
-               │
-┌──────────────▼─────────────────────────────────────────────────┐
-│                    歌单同步层 (sync/)  [macOS]                   │
-│                                                                 │
-│   ┌──────────────────────┐   ┌──────────────────────────────┐  │
-│   │ NeteaseLocalAdapter  │   │   QQMusicLocalAdapter        │  │
-│   │ 读取网易云 SQLite     │   │   读取QQ音乐 SQLite          │  │
-│   └──────────────────────┘   └──────────────────────────────┘  │
-│                    同步后自动更新 MEMORY.md 品味区块              │
-└─────────────────────────────────────────────────────────────────┘
-```
+<div align="center">
+
+<svg viewBox="0 0 860 920" width="860" xmlns="http://www.w3.org/2000/svg" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#0d1117;border-radius:12px;padding:8px">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0,8 3,0 6" fill="#58a6ff"/>
+    </marker>
+    <marker id="arr-g" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0,8 3,0 6" fill="#3fb950"/>
+    </marker>
+    <marker id="arr-v" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0,8 3,0 6" fill="#a371f7"/>
+    </marker>
+  </defs>
+
+  <!-- ── 用户界面层 ── -->
+  <rect x="10" y="10" width="840" height="130" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="430" y="30" fill="#58a6ff" font-size="12" font-weight="600" text-anchor="middle">用户界面层</text>
+
+  <!-- Web PWA -->
+  <rect x="30" y="38" width="360" height="88" rx="6" fill="#0d419d" fill-opacity="0.3" stroke="#58a6ff" stroke-width="1.2"/>
+  <text x="210" y="58" fill="#79c0ff" font-size="11" font-weight="600" text-anchor="middle">Web PWA</text>
+  <text x="210" y="74" fill="#8b949e" font-size="9" text-anchor="middle">public/index.html</text>
+  <rect x="40" y="84" width="100" height="18" rx="3" fill="#1f6feb" fill-opacity="0.4" stroke="#58a6ff" stroke-width="0.8"/>
+  <text x="90" y="96" fill="#79c0ff" font-size="8" text-anchor="middle">HTML5 Audio</text>
+  <rect x="150" y="84" width="80" height="18" rx="3" fill="#1f6feb" fill-opacity="0.4" stroke="#58a6ff" stroke-width="0.8"/>
+  <text x="190" y="96" fill="#79c0ff" font-size="8" text-anchor="middle">WebSocket</text>
+  <rect x="240" y="84" width="136" height="18" rx="3" fill="#1f6feb" fill-opacity="0.4" stroke="#58a6ff" stroke-width="0.8"/>
+  <text x="308" y="96" fill="#79c0ff" font-size="8" text-anchor="middle">Canvas 可视化 / PWA</text>
+
+  <!-- TUI -->
+  <rect x="468" y="38" width="360" height="88" rx="6" fill="#0d419d" fill-opacity="0.3" stroke="#58a6ff" stroke-width="1.2"/>
+  <text x="648" y="58" fill="#79c0ff" font-size="11" font-weight="600" text-anchor="middle">TUI 终端播放器</text>
+  <text x="648" y="74" fill="#8b949e" font-size="9" text-anchor="middle">terminal-ui.js</text>
+  <rect x="478" y="84" width="88" height="18" rx="3" fill="#1f6feb" fill-opacity="0.4" stroke="#58a6ff" stroke-width="0.8"/>
+  <text x="522" y="96" fill="#79c0ff" font-size="8" text-anchor="middle">blessed UI</text>
+  <rect x="576" y="84" width="88" height="18" rx="3" fill="#1f6feb" fill-opacity="0.4" stroke="#58a6ff" stroke-width="0.8"/>
+  <text x="620" y="96" fill="#79c0ff" font-size="8" text-anchor="middle">mpv 本地播放</text>
+  <rect x="674" y="84" width="140" height="18" rx="3" fill="#1f6feb" fill-opacity="0.4" stroke="#58a6ff" stroke-width="0.8"/>
+  <text x="744" y="96" fill="#79c0ff" font-size="8" text-anchor="middle">WebSocket + axios</text>
+
+  <!-- 箭头 UI → 服务层 -->
+  <line x1="210" y1="126" x2="210" y2="172" stroke="#58a6ff" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#arr)"/>
+  <line x1="648" y1="126" x2="648" y2="172" stroke="#58a6ff" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#arr)"/>
+  <text x="430" y="156" fill="#8b949e" font-size="9" text-anchor="middle">HTTP / WebSocket</text>
+
+  <!-- ── 服务层 ── -->
+  <rect x="10" y="162" width="840" height="428" rx="8" fill="#161b22" stroke="#3fb950" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="430" y="180" fill="#3fb950" font-size="12" font-weight="600" text-anchor="middle">服务层 (server/)</text>
+
+  <!-- index.js 网关 -->
+  <rect x="160" y="188" width="540" height="44" rx="6" fill="#1a4731" fill-opacity="0.5" stroke="#3fb950" stroke-width="1.2"/>
+  <text x="430" y="207" fill="#56d364" font-size="11" font-weight="600" text-anchor="middle">index.js  (Express + WebSocket)</text>
+  <text x="430" y="222" fill="#8b949e" font-size="9" text-anchor="middle">HTTP/WS 网关 · 路由 · 广播</text>
+
+  <!-- 箭头 网关 → 4组件 -->
+  <line x1="250" y1="232" x2="130" y2="258" stroke="#3fb950" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arr-g)"/>
+  <line x1="350" y1="232" x2="305" y2="258" stroke="#3fb950" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arr-g)"/>
+  <line x1="510" y1="232" x2="535" y2="258" stroke="#3fb950" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arr-g)"/>
+  <line x1="620" y1="232" x2="700" y2="258" stroke="#3fb950" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arr-g)"/>
+
+  <!-- 4个核心组件 -->
+  <rect x="60" y="258" width="140" height="72" rx="6" fill="#1a4731" fill-opacity="0.4" stroke="#3fb950" stroke-width="1.2"/>
+  <text x="130" y="278" fill="#56d364" font-size="10" font-weight="600" text-anchor="middle">Router</text>
+  <text x="130" y="293" fill="#8b949e" font-size="9" text-anchor="middle">意图分流</text>
+  <text x="130" y="308" fill="#6e7681" font-size="8" text-anchor="middle">指令/搜索/AI</text>
+
+  <rect x="230" y="258" width="140" height="72" rx="6" fill="#1a4731" fill-opacity="0.4" stroke="#3fb950" stroke-width="1.2"/>
+  <text x="300" y="278" fill="#56d364" font-size="10" font-weight="600" text-anchor="middle">ContextBuilder</text>
+  <text x="300" y="293" fill="#8b949e" font-size="9" text-anchor="middle">提示词组装</text>
+  <text x="300" y="308" fill="#6e7681" font-size="8" text-anchor="middle">记忆注入/Skills</text>
+
+  <rect x="490" y="258" width="140" height="72" rx="6" fill="#1a4731" fill-opacity="0.4" stroke="#3fb950" stroke-width="1.2"/>
+  <text x="560" y="278" fill="#56d364" font-size="10" font-weight="600" text-anchor="middle">State</text>
+  <text x="560" y="293" fill="#8b949e" font-size="9" text-anchor="middle">状态 · 记忆</text>
+  <text x="560" y="308" fill="#6e7681" font-size="8" text-anchor="middle">播放历史/偏好</text>
+
+  <rect x="660" y="258" width="140" height="72" rx="6" fill="#1a4731" fill-opacity="0.4" stroke="#3fb950" stroke-width="1.2"/>
+  <text x="730" y="278" fill="#56d364" font-size="10" font-weight="600" text-anchor="middle">Scheduler</text>
+  <text x="730" y="293" fill="#8b949e" font-size="9" text-anchor="middle">节律调度</text>
+  <text x="730" y="308" fill="#6e7681" font-size="8" text-anchor="middle">定时推荐/品味更新</text>
+
+  <!-- 箭头 → Claude Adapter -->
+  <line x1="130" y1="330" x2="300" y2="356" stroke="#3fb950" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arr-g)"/>
+  <line x1="300" y1="330" x2="370" y2="356" stroke="#3fb950" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arr-g)"/>
+  <line x1="560" y1="330" x2="490" y2="356" stroke="#3fb950" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arr-g)"/>
+
+  <!-- Claude Adapter -->
+  <rect x="60" y="356" width="740" height="52" rx="6" fill="#3d1f00" fill-opacity="0.6" stroke="#e3b341" stroke-width="1.5"/>
+  <text x="430" y="376" fill="#e3b341" font-size="11" font-weight="600" text-anchor="middle">Claude Adapter  (AI 适配器)</text>
+  <text x="430" y="395" fill="#8b949e" font-size="9" text-anchor="middle">优先级: Claude CLI › Anthropic API › 降级处理</text>
+
+  <!-- 箭头 → Memory Manager -->
+  <line x1="430" y1="408" x2="430" y2="430" stroke="#e3b341" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#arr)"/>
+
+  <!-- Memory Manager -->
+  <rect x="60" y="430" width="740" height="68" rx="6" fill="#2d1f63" fill-opacity="0.5" stroke="#a371f7" stroke-width="1.5"/>
+  <text x="430" y="450" fill="#c084fc" font-size="11" font-weight="600" text-anchor="middle">Memory Manager  (记忆系统)</text>
+  <text x="430" y="466" fill="#8b949e" font-size="9" text-anchor="middle">appendRaw(实时落盘) → flushSession(摘要+偏好提炼)</text>
+  <rect x="72" y="474" width="148" height="16" rx="3" fill="#2d1f63" fill-opacity="0.6" stroke="#a371f7" stroke-width="0.8"/>
+  <text x="146" y="485" fill="#a371f7" font-size="8" text-anchor="middle">L1: MEMORY.md</text>
+  <rect x="232" y="474" width="148" height="16" rx="3" fill="#2d1f63" fill-opacity="0.6" stroke="#a371f7" stroke-width="0.8"/>
+  <text x="306" y="485" fill="#a371f7" font-size="8" text-anchor="middle">L2: memory/*.md</text>
+  <rect x="392" y="474" width="148" height="16" rx="3" fill="#2d1f63" fill-opacity="0.6" stroke="#a371f7" stroke-width="0.8"/>
+  <text x="466" y="485" fill="#a371f7" font-size="8" text-anchor="middle">L3: memory.db (FTS5)</text>
+
+  <!-- 3个外部服务 -->
+  <rect x="60" y="522" width="200" height="52" rx="6" fill="#1c2128" stroke="#8b949e" stroke-width="1.2"/>
+  <text x="160" y="542" fill="#c9d1d9" font-size="10" font-weight="600" text-anchor="middle">Music API</text>
+  <text x="160" y="558" fill="#8b949e" font-size="9" text-anchor="middle">网易云搜索</text>
+
+  <rect x="310" y="522" width="200" height="52" rx="6" fill="#1c2128" stroke="#8b949e" stroke-width="1.2"/>
+  <text x="410" y="542" fill="#c9d1d9" font-size="10" font-weight="600" text-anchor="middle">Weather API</text>
+  <text x="410" y="558" fill="#8b949e" font-size="9" text-anchor="middle">Open-Meteo</text>
+
+  <rect x="560" y="522" width="240" height="52" rx="6" fill="#1c2128" stroke="#8b949e" stroke-width="1.2"/>
+  <text x="680" y="542" fill="#c9d1d9" font-size="10" font-weight="600" text-anchor="middle">Playback Service</text>
+  <text x="680" y="558" fill="#8b949e" font-size="9" text-anchor="middle">多平台播放 URL</text>
+
+  <!-- 箭头 服务层 → 数据层 -->
+  <line x1="280" y1="590" x2="200" y2="626" stroke="#a371f7" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#arr-v)"/>
+  <line x1="580" y1="590" x2="660" y2="626" stroke="#a371f7" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#arr-v)"/>
+
+  <!-- ── 数据层 ── -->
+  <rect x="10" y="616" width="840" height="192" rx="8" fill="#161b22" stroke="#a371f7" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="430" y="634" fill="#a371f7" font-size="12" font-weight="600" text-anchor="middle">数据层 (user/)</text>
+
+  <!-- 左列：MEMORY.md, memory/*.md, memory.db -->
+  <rect x="30" y="642" width="210" height="148" rx="6" fill="#2d1f63" fill-opacity="0.4" stroke="#a371f7" stroke-width="1.2"/>
+  <text x="135" y="661" fill="#c084fc" font-size="10" font-weight="600" text-anchor="middle">MEMORY.md</text>
+  <rect x="42" y="669" width="186" height="14" rx="2" fill="#2d1f63" fill-opacity="0.6"/>
+  <text x="135" y="680" fill="#8b949e" font-size="8" text-anchor="middle">用户信息</text>
+  <rect x="42" y="687" width="186" height="14" rx="2" fill="#2d1f63" fill-opacity="0.6"/>
+  <text x="135" y="698" fill="#8b949e" font-size="8" text-anchor="middle">音乐品味（自动更新）</text>
+  <rect x="42" y="705" width="186" height="14" rx="2" fill="#2d1f63" fill-opacity="0.6"/>
+  <text x="135" y="716" fill="#8b949e" font-size="8" text-anchor="middle">对话偏好（自动提炼）</text>
+
+  <rect x="30" y="726" width="100" height="40" rx="6" fill="#2d1f63" fill-opacity="0.3" stroke="#a371f7" stroke-width="1"/>
+  <text x="80" y="743" fill="#c084fc" font-size="9" font-weight="600" text-anchor="middle">memory/*.md</text>
+  <text x="80" y="757" fill="#8b949e" font-size="8" text-anchor="middle">每日对话日志</text>
+
+  <rect x="140" y="726" width="100" height="40" rx="6" fill="#2d1f63" fill-opacity="0.3" stroke="#a371f7" stroke-width="1"/>
+  <text x="190" y="743" fill="#c084fc" font-size="9" font-weight="600" text-anchor="middle">memory.db</text>
+  <text x="190" y="757" fill="#8b949e" font-size="8" text-anchor="middle">FTS5 全文索引</text>
+
+  <!-- 右列：playlists.json, routines, state -->
+  <rect x="280" y="642" width="540" height="58" rx="6" fill="#1c2128" stroke="#8b949e" stroke-width="1.2"/>
+  <text x="550" y="662" fill="#c9d1d9" font-size="10" font-weight="600" text-anchor="middle">playlists.json</text>
+  <text x="550" y="678" fill="#8b949e" font-size="9" text-anchor="middle">歌单数据（本地同步） · 网易云 + QQ音乐</text>
+
+  <rect x="280" y="710" width="540" height="42" rx="6" fill="#1c2128" stroke="#8b949e" stroke-width="1.2"/>
+  <text x="550" y="728" fill="#c9d1d9" font-size="10" font-weight="600" text-anchor="middle">routines.md / mood-rules.md</text>
+  <text x="550" y="743" fill="#8b949e" font-size="9" text-anchor="middle">用户作息和心情规则（手动编辑）</text>
+
+  <rect x="280" y="762" width="540" height="38" rx="6" fill="#1c2128" stroke="#8b949e" stroke-width="1.2"/>
+  <text x="550" y="780" fill="#c9d1d9" font-size="10" font-weight="600" text-anchor="middle">state.db.json</text>
+  <text x="550" y="795" fill="#8b949e" font-size="9" text-anchor="middle">运行时状态（播放历史 / 偏好）</text>
+
+  <!-- 箭头 数据层 → 同步层 -->
+  <line x1="430" y1="808" x2="430" y2="836" stroke="#3fb950" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#arr-g)"/>
+
+  <!-- ── 歌单同步层 ── -->
+  <rect x="10" y="828" width="840" height="82" rx="8" fill="#161b22" stroke="#3fb950" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="430" y="846" fill="#3fb950" font-size="12" font-weight="600" text-anchor="middle">歌单同步层 (sync/)  [macOS]</text>
+
+  <rect x="30" y="854" width="360" height="46" rx="6" fill="#1a4731" fill-opacity="0.4" stroke="#3fb950" stroke-width="1.2"/>
+  <text x="210" y="873" fill="#56d364" font-size="10" font-weight="600" text-anchor="middle">NeteaseLocalAdapter</text>
+  <text x="210" y="889" fill="#8b949e" font-size="9" text-anchor="middle">读取网易云本地 SQLite</text>
+
+  <rect x="440" y="854" width="390" height="46" rx="6" fill="#1a4731" fill-opacity="0.4" stroke="#3fb950" stroke-width="1.2"/>
+  <text x="635" y="873" fill="#56d364" font-size="10" font-weight="600" text-anchor="middle">QQMusicLocalAdapter</text>
+  <text x="635" y="889" fill="#8b949e" font-size="9" text-anchor="middle">读取QQ音乐本地 SQLite · 同步后更新 MEMORY.md</text>
+</svg>
+
+</div>
 
 ## 功能特性
 
