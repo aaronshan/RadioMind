@@ -18,8 +18,6 @@ https://github.com/user-attachments/assets/ea69b9ec-9129-4590-8ab7-9630f0b58da0
 
 ## 架构图
 
-<div align="center">
-
 ![Architecture](./architecture.svg)
 
 
