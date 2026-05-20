@@ -12,7 +12,7 @@ https://github.com/user-attachments/assets/8ca5f3b2-d77c-4bf4-b72a-10dacf9ef1e8
 
 ### Web GUI 界面
 
-https://github.com/user-attachments/assets/816bcd60-74b1-4c3b-a6c3-baa8b0bb2264
+https://github.com/user-attachments/assets/ea69b9ec-9129-4590-8ab7-9630f0b58da0
 
 </div>
 
