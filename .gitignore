@@ -1,0 +1,68 @@
+# ── Dependencies ──────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# ── Environment ────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── User personal data（个人数据，不提交）────────────────
+# 歌单与音乐库数据
+user/playlists.json
+user/source-*.json
+
+# 运行时状态
+user/state.db.json
+user/*.db.json
+
+# 个人品味分析（自动生成）
+user/taste.md
+
+# 记忆系统（对话日志、索引、个人记忆）
+user/memory/
+user/memory.db
+user/MEMORY.md
+
+# ── Sync（本地路径配置、歌单备份）───────────────────────
+sync/config.json
+sync/backups/
+
+# ── Runtime cache ─────────────────────────────────────────
+cache/
+!cache/.gitkeep
+
+# ── Logs ──────────────────────────────────────────────────
+logs/
+*.log
+
+# ── Claude Code 本地配置 ──────────────────────────────────
+.claude/settings.local.json
+
+# ── OS ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ───────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Temp ──────────────────────────────────────────────────
+.cache/
+temp/
+tmp/
+
+# ── Build ─────────────────────────────────────────────────
+dist/
+build/
+
+# ── PWA icons 已提交到 git，不 ignore ────────────────────
+# public/icon-*.png
+
+# ── 原始视频源文件（已转换为 mp4）────────────────────────
+*.mov

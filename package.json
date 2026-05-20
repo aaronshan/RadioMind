@@ -1,0 +1,50 @@
+{
+  "name": "aaron-music-agent",
+  "version": "1.0.0",
+  "description": "个人AI音乐电台 - 基于Claude的智能音乐推荐Agent",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "start:netease-api": "node scripts/netease-api.js start",
+    "start:all": "npm run start:netease-api & npm run start",
+    "dev": "nodemon server/index.js",
+    "init": "node scripts/init-config.js",
+    "tui": "node terminal-ui.js",
+    "sync": "node sync/index.js",
+    "sync:init": "node sync/index.js init",
+    "sync:scan": "node sync/index.js scan",
+    "sync:start": "node sync/index.js start",
+    "sync:status": "node sync/index.js status",
+    "sync:local": "node sync/index.js sync-local",
+    "sync:merge": "node sync/index.js merge",
+    "sync:test": "node sync/index.js test-local",
+    "netease-api": "node scripts/netease-api.js",
+    "netease-api:check": "node scripts/netease-api.js check"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "blessed": "^0.1.81",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "NeteaseCloudMusicApi": "^4.31.0",
+    "node-cron": "^3.0.3",
+    "sqlite3": "^5.1.7",
+    "uuid": "^9.0.1",
+    "ws": "^8.14.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "music",
+    "ai",
+    "agent",
+    "claude",
+    "recommendation",
+    "player"
+  ],
+  "author": "Aaron",
+  "license": "MIT"
+}

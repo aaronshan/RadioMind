@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RadioMind - 个人AI音乐电台</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+</head>
+<body data-theme="dark">
+  <div class="app">
+    <!-- 顶部栏 -->
+    <header class="header">
+      <div class="logo">
+        <button class="agent-avatar-btn" id="btn-agent-profile">
+          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=radiomind" alt="RadioMind" class="agent-avatar-small">
+        </button>
+        <span class="logo-text agent-name">RadioMind</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-login" id="btn-login">LOGIN</button>
+        <div class="theme-toggle">
+          <button class="theme-btn active" data-theme="dark">DARK</button>
+          <button class="theme-btn" data-theme="light">LIGHT</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 时间显示区 -->
+    <section class="time-section">
+      <div class="pixel-time" id="pixel-time">00:00</div>
+      <div class="date-info">
+        <div class="weekday" id="weekday">Monday</div>
+        <div class="date" id="date">01 JAN 2024</div>
+      </div>
+      <div class="on-air-badge">
+        <span class="on-air-dot"></span>
+        <span class="on-air-text">ON AIR</span>
+      </div>
+    </section>
+
+    <!-- 音频可视化区域 -->
+    <div class="audio-visualizer-container">
+      <canvas id="audio-visualizer" width="600" height="80"></canvas>
+    </div>
+
+    <!-- 播放器控制区 -->
+    <section class="player-section">
+      <div class="now-playing-bar">
+        <div class="playing-indicator">
+          <div class="bar-visualizer">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+        <div class="track-info">
+          <div class="track-name" id="track-name">Waiting for music...</div>
+          <div class="track-status" id="track-status">READY</div>
+        </div>
+        <div class="player-controls">
+          <button class="ctrl-btn" id="btn-prev" title="上一首">⏮</button>
+          <button class="ctrl-btn play-btn" id="btn-play" title="播放/暂停">▶</button>
+          <button class="ctrl-btn" id="btn-next" title="下一首">⏭</button>
+          <button class="ctrl-btn" id="btn-stop" title="停止">⏹</button>
+          <button class="ctrl-btn" id="btn-fav" title="收藏">♡</button>
+          <button class="ctrl-btn" id="btn-hide" title="隐藏">−</button>
+        </div>
+        <div class="volume-control">
+          <span>VOL</span>
+          <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="70">
+        </div>
+      </div>
+
+      <div class="progress-section">
+        <span class="time-current" id="time-current">0:00</span>
+        <div class="progress-bar" id="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <span class="time-total" id="time-total">0:00</span>
+      </div>
+    </section>
+
+    <!-- 播放队列 -->
+    <section class="queue-section">
+      <div class="queue-header">
+        <span class="queue-title">QUEUE</span>
+        <span class="track-count"><span id="queue-count">0</span> TRACKS</span>
+      </div>
+      <div class="queue-list" id="queue-list">
+        <!-- 动态生成 -->
+      </div>
+    </section>
+
+    <!-- 聊天区 -->
+    <section class="chat-section">
+      <div class="chat-header">
+        <div class="agent-status">
+          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=radiomind" alt="RadioMind" class="agent-avatar">
+          <span class="agent-name">RadioMind</span>
+          <span class="live-badge">LIVE</span>
+        </div>
+        <button class="tts-toggle" id="btn-tts-toggle" title="语音播报">🔊</button>
+      </div>
+
+      <div class="chat-messages" id="chat-messages">
+        <div class="message agent-message">
+          <div class="message-content">
+            <p>嗨，我是 RadioMind，全天候在线为你服务。</p>
+            <p>告诉我你现在的心情，我来找最适合你的歌。</p>
+          </div>
+          <div class="message-meta">
+            <span class="message-time">Now</span>
+            <button class="btn-replay-tts" title="重播语音">🔊</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-input-area">
+        <div class="input-wrapper">
+          <input type="text" class="chat-input" id="chat-input" placeholder="和 DJ 说点什么..." autocomplete="off">
+          <button class="btn-voice-input" id="btn-voice-input" title="语音输入">🎤</button>
+          <button class="btn-send" id="btn-send">↑</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Agent 个人介绍弹窗 -->
+    <div class="modal agent-profile-modal" id="agent-profile-modal">
+      <div class="modal-content agent-profile-content">
+        <button class="btn-close" id="btn-close-profile">×</button>
+        <div class="agent-profile-header">
+          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=radiomind" alt="Agent" class="agent-avatar-large">
+          <h2 class="agent-profile-name agent-name">RadioMind</h2>
+          <input type="text" class="agent-name-input hidden" id="agent-name-input" placeholder="输入新名字">
+          <button class="btn-edit-name" id="btn-edit-name">✎</button>
+          <button class="btn-save-name hidden" id="btn-save-name">✓</button>
+          <p class="agent-tagline">一开机我就打碟</p>
+        </div>
+        <div class="agent-bio">
+          <p>你的私人 AI DJ，会打碟的 taste.md</p>
+          <p>Your mood is my prompt.</p>
+          <p>I hate algorithm. I have taste.</p>
+        </div>
+        <div class="agent-stats">
+          <div class="stat-item">
+            <span class="stat-label">ON AIR</span>
+            <span class="stat-value" id="on-air-stat">24/7</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">GENRES</span>
+            <span class="stat-value" id="genres-stat">∞</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">PLAYS</span>
+            <span class="stat-value" id="total-plays">0</span>
+          </div>
+        </div>
+        <div class="agent-genres" id="agent-genres">
+          <!-- 动态生成 -->
+        </div>
+        <div class="agent-credit">
+          <span>CLAUDE × MMGUO</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 语音输入状态 -->
+    <div class="voice-modal" id="voice-modal">
+      <div class="voice-indicator">
+        <div class="voice-waves">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p>Listening...</p>
+        <button class="btn-cancel-voice" id="btn-cancel-voice">Cancel</button>
+      </div>
+    </div>
+
+  </div>
+
+  <audio id="audio-player" crossorigin="anonymous"></audio>
+  <script src="/js/app.js"></script>
+</body>
+</html>
