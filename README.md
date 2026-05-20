@@ -20,7 +20,25 @@ https://github.com/user-attachments/assets/ea69b9ec-9129-4590-8ab7-9630f0b58da0
 
 <div align="center">
 
+**RadioMind · 系统架构图**<br>
+个人 AI 音乐电台 · Node.js · Claude · SQLite FTS5 · 四层架构
+
+<br>
+
 ![Architecture](./architecture.svg)
+
+<br>
+
+| 核心特性 | 技术栈 | 关键文件 |
+|---------|--------|---------|
+| 🧠 三层记忆：L1常青/L2日志/L3 FTS5 | Node.js · Express · node-cron | `server/index.js` — HTTP/WS 网关 |
+| 🤖 AI 意图路由：指令/搜索/自然语言 | Claude CLI / Anthropic API | `router.js` — 意图分流 |
+| ⏰ 节律调度：早午晚推送 + 凌晨品味更新 | SQLite · FTS5 全文检索 | `context-builder.js` — 提示词组装 |
+| 📱 双客户端：Web PWA + TUI 终端 | HTML5 Audio · Canvas · WebSocket | `memory-manager.js` — 三层记忆 |
+| 🎵 多平台播放：网易云直链/QQ/回退 | blessed · mpv 本地播放 | `scheduler.js` — 节律调度 |
+| 🔄 本地同步：macOS SQLite 直读 | 网易云 Music API · Open-Meteo | `playback-service.js` — 播放URL |
+
+</div>
 
 <!--SVG_START
 <svg viewBox="0 0 860 920" width="860" xmlns="http://www.w3.org/2000/svg" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#0d1117;border-radius:12px;padding:8px">
