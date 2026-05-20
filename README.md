@@ -6,11 +6,11 @@
 
 ### TUI 终端界面
 
-<video src="./radiomind-tui.mp4" controls width="100%"></video>
+![TUI Demo](https://github.com/user-attachments/assets/8ca5f3b2-d77c-4bf4-b72a-10dacf9ef1e8)
 
 ### Web GUI 界面
 
-<video src="./radiomind-gui.mp4" controls width="100%"></video>
+![GUI Demo](https://github.com/user-attachments/assets/816bcd60-74b1-4c3b-a6c3-baa8b0bb2264)
 
 ## 架构图
 
