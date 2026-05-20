@@ -4,6 +4,8 @@
 
 ## 演示
 
+<div align="center">
+
 ### TUI 终端界面
 
 ![TUI Demo](./radiomind-tui.gif)
@@ -11,6 +13,8 @@
 ### Web GUI 界面
 
 ![GUI Demo](./radiomind-gui.gif)
+
+</div>
 
 ## 架构图
 
